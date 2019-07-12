@@ -6,7 +6,7 @@ from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 import pandas as pd
 graph = Graph()
-remoteConn = DriverRemoteConnection('ws://localhost:8182/gremlin','g')
+remoteConn = DriverRemoteConnection('wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com:8182/gremlin','g')
 g = graph.traversal().withRemote(remoteConn)
 df = pd.read_csv('input/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv', header=0, dtype='str')
 df = df.drop_duplicates(['PART_ID'], keep='first')

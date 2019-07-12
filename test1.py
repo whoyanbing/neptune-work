@@ -6,7 +6,7 @@ from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 import pandas as pd
 graph = Graph()
-remoteConn = DriverRemoteConnection('ws://localhost:8182/gremlin','g')
+remoteConn = DriverRemoteConnection('wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com:8182/gremlin','g')
 g = graph.traversal().withRemote(remoteConn)
 df = pd.read_csv('input/PurchHist_by_cont[1][1].csv', sep='|', header=0, dtype='str')
 for i, row in df.iterrows():
@@ -14,11 +14,11 @@ for i, row in df.iterrows():
         g.addV('account').property('AccountId', row['Account ID']).\
             property('AccountName1', row['Account Name1']).\
             property('AccountName2', row['Account Name2']).\
-            property('AccountRole', row['Account Role']).next()
+            property('EmailAddress', row['Email Address']).next()
     if not g.V().has('MaterialMasterProductId', row['Material Master Product ID']).toList():
         g.addV('product').property('ProductLine', row['Product Line']).\
         	property('MaterialMasterProductId', row['Material Master Product ID']).\
-        	property('ProductDescription', row['Product Decription']).next()
+        	property('ProductDescription', row['Product Description']).next()
     g.addE('order').from_(g.V().has('AccountId',row['Account ID'])).\
             to(g.V().has('MaterialMasterProductId',row['Material Master Product ID'])).\
             property('OrderNumber',row['Order Number']).\
