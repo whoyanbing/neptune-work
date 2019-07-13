@@ -8,24 +8,29 @@ import pandas as pd
 graph = Graph()
 remoteConn = DriverRemoteConnection('ws://localhost:8182/gremlin','g')
 g = graph.traversal().withRemote(remoteConn)
-df = pd.read_csv('input/PurchHist_by_acct[1][1].csv', sep='|', header=0, dtype='str')
+def nan_to_space(data):
+	if type(data) == float:
+		return ''
+	return data
+df = pd.read_csv('input/PurchHist_by_acct[1][1].csv', sep='|', header=0, dtype=str)
 for i, row in df.iterrows():
-    if not g.V().has('AccountId', row['Account ID']).toList():
-        g.addV('account').property('AccountId', row['Account ID']).\
+	if not g.V().has('AccountId', row['Account ID']).toList():
+		g.addV('account').property('AccountId', row['Account ID']).\
             property('CompanyName1', row['Compnay Name1']).\
-            property('CompanyName2', row['Compnay Name2']).\
+            property('CompanyName2', nan_to_space(row['Compnay Name2'])).\
             property('AccountRole', row['Account Role']).next()
-    if not g.V().has('MaterialMasterProductId', row['Material Master Product ID']).toList():
-        g.addV('product').property('ProductLine', row['Product Line']).\
+	if not g.V().has('MaterialMasterProductId', row['Material Master Product ID']).toList():
+		g.addV('product').property('ProductLine', row['Product Line']).\
         	property('MaterialMasterProductId', row['Material Master Product ID']).\
         	property('ProductDescription', row['Product Decription']).next()
-    g.addE('order').from_(g.V().has('AccountId',row['Account ID'])).\
+	g.addE('order').from_(g.V().has('AccountId',row['Account ID'])).\
             to(g.V().has('MaterialMasterProductId',row['Material Master Product ID'])).\
             property('OrderNumber',row['Order Number']).\
             property('OrderDate',row['Order Date']).\
             property('Purchase/NetAmount',row['Purchase/Net Amount']).\
             property('OrderQuantity',row['Order Quantity']).\
             property('OrderType',row['Order Type']).\
+            property('MarketCode', nan_to_space(row['Market Code'])).\
             property('SoldToCountry',row['Sold to Country']).iterate()
 
 print(g.V().count().toList())
