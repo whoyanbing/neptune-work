@@ -6,7 +6,6 @@ from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 import pandas as pd
 import os
-import time
 
 def graph_connect(server):
     return DriverRemoteConnection( server + ':8182/gremlin','g')
@@ -29,7 +28,7 @@ def nan_to_string(data):
 	return data
 
 def load_purchase_history(filepath, graph_traversal):
-    print('start load' + filepath + '...')
+    print('start load ' + filepath + '...')
     data_frame = pd.read_csv(filepath, sep='|', header=0, dtype=str)
     g = graph_traversal
     for index, row in data_frame.iterrows():
@@ -40,30 +39,30 @@ def load_purchase_history(filepath, graph_traversal):
             property('CRMContactID', nan_to_string(row['CRM Contact ID'])).\
             property('ECCContactID', nan_to_string(row['ECC Contact ID'])).\
             property('emailAddress', nan_to_string(row['Email Address'])).next()
-        if not g.V().has('objId', row['Material Master Product ID']).toList():
-            g.addV('product').property('objId', row['Material Master Product ID']).\
-            property('productLine', row['Product Line']).\
-            property('productItem', row['Product Item']).\
-            property('productDescription', row['Product Description']).next()
-        g.addE('order').from_(g.V().has('objId',row['Account ID'])).\
-            to(g.V().has('objId',row['Material Master Product ID'])).\
+        if not g.V().has('objId', nan_to_string(row['Material Master Product ID'])).toList():
+            g.addV('product').property('objId', nan_to_string(row['Material Master Product ID'])).\
+            property('productLine', nan_to_string(row['Product Line'])).\
+            property('productItem', nan_to_string(row['Product Item'])).\
+            property('productDescription', nan_to_string(row['Product Description'])).next()
+        g.addE('order').from_(g.V().has('objId',nan_to_string(row['Account ID']))).\
+            to(g.V().has('objId',nan_to_string(row['Material Master Product ID']))).\
             property('app', 'Rec_Engine').\
-            property('orderNumber',row['Order Number']).\
-            property('orderDate',row['Order Date']).\
-            property('primaryProduct',row['Primary Product']).\
-            property('purchaseOrder',row['Purchase Order']).\
-            property('P.O.Date',row['P.O. Date']).\
-            property('purchaseAmount',row['Purchase/Net Amount']).\
-            property('targetQuantity',row['Target Quantity']).\
-            property('orderQuantity',row['Order Quantity']).\
-            property('orderType',row['Order Type']).\
-            property('totalOrderValue',row['Total Order Value']).\
-            property('soldToCountry',row['Sold to Country']).\
+            property('orderNumber',nan_to_string(row['Order Number'])).\
+            property('orderDate',nan_to_string(row['Order Date'])).\
+            property('primaryProduct',nan_to_string(row['Primary Product'])).\
+            property('purchaseOrder',nan_to_string(row['Purchase Order'])).\
+            property('P.O.Date',nan_to_string(row['P.O. Date'])).\
+            property('purchaseAmount',nan_to_string(row['Purchase/Net Amount'])).\
+            property('targetQuantity',nan_to_string(row['Target Quantity'])).\
+            property('orderQuantity',nan_to_string(row['Order Quantity'])).\
+            property('orderType',nan_to_string(row['Order Type'])).\
+            property('totalOrderValue',nan_to_string(row['Total Order Value'])).\
+            property('soldToCountry',nan_to_string(row['Sold to Country'])).\
             property('marketCode', nan_to_string(row['Market Code'])).iterate()
-    print('load' + filepath + 'succefully!')
+    print('load ' + filepath + 'succefully!')
 
 def load_product_reference(filepath, graph_traversal):
-    print('start load' + filepath + '...')
+    print('start load ' + filepath + '...')
     dataframe = pd.read_csv(filepath, header=0, dtype='str')
     dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
     g = graph_traversal
@@ -75,10 +74,10 @@ def load_product_reference(filepath, graph_traversal):
             property('app', 'Rec_Engine').\
             property('Type',nan_to_string(row['TYPE'])).\
             property('metaValues',nan_to_string(row['META_VALUES'])).iterate()
-    print('load' + filepath + 'succefully!')
+    print('load ' + filepath + 'succefully!')
 
 def main():
-    print('script start!')
+    print('load start!')
     #remote_server = 'ws://localhost'
     remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
     remote_conn = graph_connect(remote_server)
@@ -86,10 +85,10 @@ def main():
     file_list = file_path_list('input/PurchasehistoryData', 'PurchHist_by_cont.csv')
     for file in file_list:
         load_purchase_history(file, g_traversal)
-    #reference_data = 'input/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
-    #load_product_reference(reference_data, g_traversal)
+    reference_data = 'input/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
+    load_product_reference(reference_data, g_traversal)
     remote_conn.close()
-    print('script completed!')
+    print('load completed!')
 
 if __name__ == "__main__":
     main()
