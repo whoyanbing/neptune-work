@@ -1,73 +1,94 @@
+from __future__  import print_function
+from gremlin_python import statics
+from gremlin_python.structure.graph import Graph
+from gremlin_python.process.graph_traversal import __
+from gremlin_python.process.strategies import *
+from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 import pandas as pd
-import sys, os
+import os
 
-def parse_csv(filename, columns, new_filename, sep='|'):
-    #load csv file
-    df = pd.read_csv(filename, header=0, sep=sep, encoding='utf-8')
-    #choose useful columns
-    df = df[columns]
-    #write to a new csv file
-    df.to_csv('tmp/' + new_filename + '.csv', index=False, encoding='utf-8')
+def graph_connect(server):
+    return DriverRemoteConnection( server + ':8182/gremlin','g')
 
-def rename_header(filename, new_columns, label, name, index_label=None, index=False):
-    #load csv file
-    df = pd.read_csv('tmp/' + filename, header=0, encoding='utf-8')
-    if(index):
-        df.drop_duplicates(['PART_ID'], keep='first', inplace=True)
-    #rename column name
-    df.rename(columns=new_columns, inplace=True)
-    #add label column
-    df['~label'] = label
-    df.to_csv('output/' + name + '_' + label + '.csv', index_label=index_label, index=index, encoding='utf-8')
+def graph_traversal(connect):
+    graph = Graph()
+    return graph.traversal().withRemote(connect)
 
-def remove_tmp(path):
+def file_path_list(path, filename):
     file_list = os.listdir(path)
+    file_path = []
     for file in file_list:
-            os.remove(path + '/' + file)
+        file_account_by_cont = file + '/' + filename
+        file_path.append(path + '/' + file_account_by_cont)
+    return file_path
+
+def nan_to_string(data):
+	if type(data) == float:
+		return ''
+	return data
+
+def load_purchase_history(filepath, graph_traversal):
+    print('start load ' + filepath + '...')
+    data_frame = pd.read_csv(filepath, sep='|', header=0, dtype=str)
+    g = graph_traversal
+    for index, row in data_frame.iterrows():
+        if not g.V().has('objId', nan_to_string(row['Account ID'])).toList():
+            g.addV('account').property('objId', nan_to_string(row['Account ID'])).\
+            property('accountName1', nan_to_string(row['Account Name1'])).\
+            property('accountName2', nan_to_string(row['Account Name2'])).\
+            property('CRMContactID', nan_to_string(row['CRM Contact ID'])).\
+            property('ECCContactID', nan_to_string(row['ECC Contact ID'])).\
+            property('emailAddress', nan_to_string(row['Email Address'])).next()
+        if not g.V().has('objId', nan_to_string(row['Material Master Product ID'])).toList():
+            g.addV('product').property('objId', nan_to_string(row['Material Master Product ID'])).\
+            property('productLine', nan_to_string(row['Product Line'])).\
+            property('productItem', nan_to_string(row['Product Item'])).\
+            property('productDescription', nan_to_string(row['Product Description'])).next()
+        g.addE('order').from_(g.V().has('objId',nan_to_string(row['Account ID']))).\
+            to(g.V().has('objId',nan_to_string(row['Material Master Product ID']))).\
+            property('app', 'Rec_Engine').\
+            property('orderNumber',nan_to_string(row['Order Number'])).\
+            property('orderDate',nan_to_string(row['Order Date'])).\
+            property('primaryProduct',nan_to_string(row['Primary Product'])).\
+            property('purchaseOrder',nan_to_string(row['Purchase Order'])).\
+            property('P.O.Date',nan_to_string(row['P.O. Date'])).\
+            property('purchaseAmount',nan_to_string(row['Purchase/Net Amount'])).\
+            property('targetQuantity',nan_to_string(row['Target Quantity'])).\
+            property('orderQuantity',nan_to_string(row['Order Quantity'])).\
+            property('orderType',nan_to_string(row['Order Type'])).\
+            property('totalOrderValue',nan_to_string(row['Total Order Value'])).\
+            property('soldToCountry',nan_to_string(row['Sold to Country'])).\
+            property('marketCode', nan_to_string(row['Market Code'])).iterate()
+    print('load ' + filepath + 'succefully!')
+
+def load_product_reference(filepath, graph_traversal):
+    print('start load ' + filepath + '...')
+    dataframe = pd.read_csv(filepath, header=0, dtype='str')
+    dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
+    g = graph_traversal
+    for i, row in dataframe.iterrows():
+	    if g.V().has('objId',nan_to_string(row['PART_ID'])).toList() and \
+        g.V().has('objId',nan_to_string(row['REF_PART_ID'])).toList():
+		    g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
+            to(g.V().has('objId',nan_to_string(row['REF_PART_ID']))).\
+            property('app', 'Rec_Engine').\
+            property('Type',nan_to_string(row['TYPE'])).\
+            property('metaValues',nan_to_string(row['META_VALUES'])).iterate()
+    print('load ' + filepath + 'succefully!')
 
 def main():
-    #load input data file
-    file_purch_history = sys.argv[1]
+    print('load start!')
+    #remote_server = 'ws://localhost'
+    remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
+    remote_conn = graph_connect(remote_server)
+    g_traversal = graph_traversal(remote_conn)
+    file_list = file_path_list('input/PurchasehistoryData', 'PurchHist_by_cont.csv')
+    for file in file_list:
+        load_purchase_history(file, g_traversal)
+    reference_data = 'input/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
+    load_product_reference(reference_data, g_traversal)
+    remote_conn.close()
+    print('load completed!')
 
-    file_manual_reference = sys.argv[2]
-
-    account_columns = ['Account ID', 'Account Name1', 'Account Name2', 'CRM Contact ID', 'ECC Contact ID']
-    
-    product_columns = ['Material Master Product ID', 'Product Item', 'Product Line', 'Product Description']
-    
-    order_columns = ['Order Number', 'Account ID', 'Material Master Product ID']
-
-    reference_columns = ['PART_ID', 'REF_PART_ID']
-    
-    parse_csv(file_purch_history, account_columns, 'account')
-    
-    parse_csv(file_purch_history, product_columns, 'product')
-    
-    parse_csv(file_purch_history, order_columns, 'order')
-
-    parse_csv(file_manual_reference, reference_columns, 'reference', ',')
-
-    #rename headers
-    new_columns_account = {'Account ID':'~id', 'Account Name1':'account_name1:String', 'Account Name2':'account_name2:String', 'CRM Contact ID':'CRM_contact_id:String', 'ECC Contact ID':'ECC_contact_id:String'}
-    
-    new_columns_product = {'Material Master Product ID':'~id', 'Product Item':'product_item:String', 'Product Line':'product_line:String', 'Product Description':'product_desc:String'}
-    
-    new_columns_order = {'Order Number':'~id', 'Account ID':'~from', 'Material Master Product ID':'~to'}
-
-    new_columns_reference = {'PART_ID':'~from', 'REF_PART_ID':'~to'}
-    
-    rename_header('account.csv', new_columns_account, 'account', 'vertex')
-
-    rename_header('product.csv', new_columns_product, 'product', 'vertex')
-
-    rename_header('order.csv', new_columns_order, 'order', 'edge')
-
-    rename_header('reference.csv', new_columns_reference, 'reference', 'edge', '~id', True)
-
-    #remove tmp file
-    path = 'tmp'
-    remove_tmp(path)
-
-if __name__ == '__main__':
-    #calling main function
+if __name__ == "__main__":
     main()

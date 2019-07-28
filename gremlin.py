@@ -1,14 +1,14 @@
-from __future__  import print_function  # Python 2/3 compatibility
-from gremlin_python import statics
-from gremlin_python.structure.graph import Graph
-from gremlin_python.process.graph_traversal import __
-from gremlin_python.process.strategies import *
-from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
+from main import graph_connect
+from main import graph_traversal
 
-graph = Graph()
+remote_server = 'ws://localhost'
+#remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
+remote_conn = graph_connect(remote_server)
+g = graph_traversal(remote_conn)
 
-remoteConn = DriverRemoteConnection('ws://localhost:8182/gremlin','g')
-g = graph.traversal().withRemote(remoteConn)
+print(g.V().hasLabel('account').count().toList)
+print(g.V().hasLabel('product').count().toList)
+print(g.E().hasLabel('order').count().toList)
+print(g.E().hasLabel('reference').count().toList)
 
-print(g.E().hasLabel('reference').toList())
-remoteConn.close()
+remote_conn.close()
