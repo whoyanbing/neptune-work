@@ -2,7 +2,7 @@ from __future__  import print_function
 from gremlin_python import statics
 from gremlin_python.structure.graph import Graph
 from gremlin_python.process.graph_traversal import __
-from gremlin_python.process.strategies import *
+#from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 import pandas as pd
 import os
@@ -65,8 +65,9 @@ def load_product_reference(filepath, graph_traversal):
     print('start load ' + filepath + '...')
     dataframe = pd.read_csv(filepath, header=0, dtype='str')
     dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
+    dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
     g = graph_traversal
-    for i, row in dataframe.iterrows():
+    for index, row in dataframe.iterrows():
 	    if g.V().has('objId',nan_to_string(row['PART_ID'])).toList() and \
         g.V().has('objId',nan_to_string(row['REF_PART_ID'])).toList():
 		    g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
@@ -78,14 +79,14 @@ def load_product_reference(filepath, graph_traversal):
 
 def main():
     print('load start!')
-    #remote_server = 'ws://localhost'
-    remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
+    remote_server = 'ws://localhost'
+    #remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
     remote_conn = graph_connect(remote_server)
     g_traversal = graph_traversal(remote_conn)
-    file_list = file_path_list('input/PurchasehistoryData', 'PurchHist_by_cont.csv')
+    file_list = file_path_list('data/purchase_history', 'PurchHist_by_cont.csv')
     for file in file_list:
         load_purchase_history(file, g_traversal)
-    reference_data = 'input/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
+    reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
     load_product_reference(reference_data, g_traversal)
     remote_conn.close()
     print('load completed!')
