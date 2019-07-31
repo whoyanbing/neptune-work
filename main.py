@@ -14,13 +14,22 @@ def graph_traversal(connect):
     graph = Graph()
     return graph.traversal().withRemote(connect)
 
-def file_path_list(path, filename):
-    file_list = os.listdir(path)
-    file_path = []
-    for file in file_list:
-        file_account_by_cont = file + '/' + filename
-        file_path.append(path + '/' + file_account_by_cont)
-    return file_path
+# def file_path_list(path, filename):
+#     file_list = os.listdir(path)
+#     file_path = []
+#     for file in file_list:
+#         file_account_by_cont = file + '/' + filename
+#         file_path.append(path + '/' + file_account_by_cont)
+#     return file_path
+
+def file_path_list(path):
+    path_list = []
+    dir_list = os.listdir(path)
+    for directory in dir_list:
+        file_list = os.listdir(path + '/' + directory)
+        for file in file_list:
+            path_list.append(path + '/' + directory + '/' + file)
+    return path_list
 
 def nan_to_string(data):
 	if type(data) == float:
@@ -79,14 +88,16 @@ def load_product_reference(filepath, graph_traversal):
 
 def main():
     print('load start!')
-    remote_server = 'ws://localhost'
-    #remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
+    #remote_server = 'ws://localhost'
+    remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
     remote_conn = graph_connect(remote_server)
     g_traversal = graph_traversal(remote_conn)
-    file_list = file_path_list('data/purchase_history', 'PurchHist_by_cont.csv')
+    file_list = file_path_list('data/purchase_history')
     for file in file_list:
         load_purchase_history(file, g_traversal)
     reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
+    load_product_reference(reference_data, g_traversal)
+    reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907231521.csv'
     load_product_reference(reference_data, g_traversal)
     remote_conn.close()
     print('load completed!')
