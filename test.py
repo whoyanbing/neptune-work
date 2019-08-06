@@ -1,3 +1,6 @@
+#!./venv/bin/python
+# _*_ coding:utf-8 _*_
+
 from pyignite import Client
 
 client = Client()
