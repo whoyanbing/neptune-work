@@ -88,8 +88,8 @@ def load_product_reference(filepath, graph_traversal):
 
 def main():
     print('load start!')
-    #remote_server = 'ws://localhost'
-    remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
+    remote_server = 'ws://localhost'
+    #remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
     remote_conn = graph_connect(remote_server)
     g_traversal = graph_traversal(remote_conn)
     file_list = file_path_list('data/purchase_history')
