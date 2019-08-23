@@ -1,4 +1,8 @@
+#vscode setting file
 .vscode
+#python virtual environment
 venv
+#python runtime cache
 __pycache__
+#macos system file 
 .DS_Store

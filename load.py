@@ -72,7 +72,7 @@ def load_purchase_history(filepath, graph_traversal):
 
 def load_product_reference(filepath, graph_traversal):
     print('start load ' + filepath + '...')
-    dataframe = pd.read_csv(filepath, header=0, dtype='str')
+    dataframe = pd.read_csv(filepath, header=0, dtype=str)
     dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
     dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
     g = graph_traversal
@@ -86,6 +86,17 @@ def load_product_reference(filepath, graph_traversal):
             property('metaValues',nan_to_string(row['META_VALUES'])).iterate()
     print('load ' + filepath + 'succefully!')
 
+def load_reference(filepath, graph_traversal):
+    print('start load ' + filepath + '...')
+    dataframe = pd.read_excel(filepath, index_col=0, header=0, dtype=str)
+    g = graph_traversal
+    for index, row in dataframe.iterrows():
+        if g.V().has('objId', row[0]).toList() and g.V().has('objId', row[2]).toList():
+            g.addE('reference').from_(g.V().has('objId', row[0])).to(g.V().has('objId', row[2])).\
+            property('app', 'Rec_Engine').\
+            property('type', 'CrossSellReference').iterate()
+    print('load ' + filepath + 'succefully!')
+
 def main():
     print('load start!')
     remote_server = 'ws://localhost'
@@ -95,10 +106,12 @@ def main():
     file_list = file_path_list('data/purchase_history')
     for file in file_list:
         load_purchase_history(file, g_traversal)
-    reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
-    load_product_reference(reference_data, g_traversal)
-    reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907231521.csv'
-    load_product_reference(reference_data, g_traversal)
+    # reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
+    # load_product_reference(reference_data, g_traversal)
+    # reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907231521.csv'
+    # load_product_reference(reference_data, g_traversal)
+    filepath = 'Recommendation_Engine_PROD_LOAD_FILE.xlsx'
+    load_reference(filepath, g_traversal)
     remote_conn.close()
     print('load completed!')
 
