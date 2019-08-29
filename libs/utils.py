@@ -51,14 +51,12 @@ def load_purchase_history(filepath, graph_traversal):
 
 def load_manual_reference(filepath, graph_traversal):
     dataframe = pd.read_csv(filepath, header=0, dtype=str)
-    dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
-    dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
+    #dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
+    #dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
     g = graph_traversal
     for index, row in dataframe.iterrows():
 	    if g.V().has('objId',nan_to_string(row['PART_ID'])).toList() and \
         g.V().has('objId',nan_to_string(row['REF_PART_ID'])).toList():
 		    g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
             to(g.V().has('objId',nan_to_string(row['REF_PART_ID']))).\
-            property('app', 'Rec_Engine').\
-            property('Type',nan_to_string(row['TYPE'])).\
-            property('metaValues',nan_to_string(row['META_VALUES'])).iterate()
+            property('app', 'Rec_Engine').iterate()
