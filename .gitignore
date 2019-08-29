@@ -6,3 +6,5 @@ venv
 __pycache__
 #macos system file 
 .DS_Store
+#.gitignore
+.gitignore
