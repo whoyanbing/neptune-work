@@ -1,0 +1,8 @@
+{
+    "local_host": "ws://127.0.0.1",
+    "remote_host":"wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com",
+    "purchase_history_path": "data/purchase_history",
+    "manual_reference_path": "data/manual_reference",
+    "log_format": "%(asctime)s - %(levelname)s - %(message)s",
+    "date_format": "%m/%d/%Y %H:%M:%S %p"
+}

@@ -2,34 +2,15 @@ from __future__  import print_function
 from gremlin_python import statics
 from gremlin_python.structure.graph import Graph
 from gremlin_python.process.graph_traversal import __
-#from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 import pandas as pd
-import os
 
 def graph_connect(server):
-    return DriverRemoteConnection( server + ':8182/gremlin','g')
+    return DriverRemoteConnection(server + ':8182/gremlin','g')
 
 def graph_traversal(connect):
     graph = Graph()
     return graph.traversal().withRemote(connect)
-
-# def file_path_list(path, filename):
-#     file_list = os.listdir(path)
-#     file_path = []
-#     for file in file_list:
-#         file_account_by_cont = file + '/' + filename
-#         file_path.append(path + '/' + file_account_by_cont)
-#     return file_path
-
-def file_path_list(path):
-    path_list = []
-    dir_list = os.listdir(path)
-    for directory in dir_list:
-        file_list = os.listdir(path + '/' + directory)
-        for file in file_list:
-            path_list.append(path + '/' + directory + '/' + file)
-    return path_list
 
 def nan_to_string(data):
 	if type(data) == float:
@@ -37,7 +18,6 @@ def nan_to_string(data):
 	return data
 
 def load_purchase_history(filepath, graph_traversal):
-    print('start load ' + filepath + '...')
     data_frame = pd.read_csv(filepath, sep='|', header=0, dtype=str)
     g = graph_traversal
     for index, row in data_frame.iterrows():
@@ -68,10 +48,8 @@ def load_purchase_history(filepath, graph_traversal):
             property('totalOrderValue',nan_to_string(row['Total Order Value'])).\
             property('soldToCountry',nan_to_string(row['Sold to Country'])).\
             property('marketCode', nan_to_string(row['Market Code'])).iterate()
-    print('load ' + filepath + 'succefully!')
 
-def load_product_reference(filepath, graph_traversal):
-    print('start load ' + filepath + '...')
+def load_manual_reference(filepath, graph_traversal):
     dataframe = pd.read_csv(filepath, header=0, dtype=str)
     dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
     dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
@@ -84,36 +62,3 @@ def load_product_reference(filepath, graph_traversal):
             property('app', 'Rec_Engine').\
             property('Type',nan_to_string(row['TYPE'])).\
             property('metaValues',nan_to_string(row['META_VALUES'])).iterate()
-    print('load ' + filepath + 'succefully!')
-
-def load_reference(filepath, graph_traversal):
-    print('start load ' + filepath + '...')
-    dataframe = pd.read_excel(filepath, index_col=0, header=0, dtype=str)
-    g = graph_traversal
-    for index, row in dataframe.iterrows():
-        if g.V().has('objId', row[0]).toList() and g.V().has('objId', row[2]).toList():
-            g.addE('reference').from_(g.V().has('objId', row[0])).to(g.V().has('objId', row[2])).\
-            property('app', 'Rec_Engine').\
-            property('type', 'CrossSellReference').iterate()
-    print('load ' + filepath + 'succefully!')
-
-def main():
-    print('load start!')
-    remote_server = 'ws://localhost'
-    #remote_server = 'wss://recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com'
-    remote_conn = graph_connect(remote_server)
-    g_traversal = graph_traversal(remote_conn)
-    file_list = file_path_list('data/purchase_history')
-    for file in file_list:
-        load_purchase_history(file, g_traversal)
-    # reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907101523.csv'
-    # load_product_reference(reference_data, g_traversal)
-    # reference_data = 'data/manual_reference/PIM_ATG_PART_AND_PART_CROSSREFERENCE_201907231521.csv'
-    # load_product_reference(reference_data, g_traversal)
-    filepath = 'Recommendation_Engine_PROD_LOAD_FILE.xlsx'
-    load_reference(filepath, g_traversal)
-    remote_conn.close()
-    print('load completed!')
-
-if __name__ == "__main__":
-    main()
