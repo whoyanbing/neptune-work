@@ -60,3 +60,6 @@ def load_manual_reference(filepath, graph_traversal):
 		    g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
             to(g.V().has('objId',nan_to_string(row['REF_PART_ID']))).\
             property('app', 'Rec_Engine').iterate()
+
+if __name__ == '__main__':
+    main()
