@@ -1,5 +1,5 @@
 from libs import utils
-import os,json
+import json
 
 with open('config/config.json', 'r', encoding='utf-8') as f:
         config = json.load(f)

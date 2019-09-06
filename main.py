@@ -12,18 +12,18 @@ def main():
     
     g_traversal = utils.graph_traversal(remote_conn)
 
-    purchase_history_files = os.listdir(config['purchase_history_path'])
+    # purchase_history_files = os.listdir(config['purchase_history_path'])
 
-    if (purchase_history_files):
-        try:
-            for ph_file in purchase_history_files:
-                utils.load_purchase_history(config['purchase_history_path'] + '/' + ph_file, g_traversal)
-        except Exception as e:
-            logging.error(e)
-        else:
-            logging.info("load purchase_hisroty succefully!")
-    else:
-        logging.error("purchase_history file not exists!")
+    # if (purchase_history_files):
+    #     try:
+    #         for ph_file in purchase_history_files:
+    #             utils.load_purchase_history(config['purchase_history_path'] + '/' + ph_file, g_traversal)
+    #     except Exception as e:
+    #         logging.error(e)
+    #     else:
+    #         logging.info("load purchase_hisroty succefully!")
+    # else:
+    #     logging.error("purchase_history file not exists!")
 
     manual_reference_files = os.listdir(config['manual_reference_path'])
 
