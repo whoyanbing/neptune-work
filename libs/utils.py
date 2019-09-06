@@ -51,15 +51,27 @@ def load_purchase_history(filepath, graph_traversal):
 
 def load_manual_reference(filepath, graph_traversal):
     dataframe = pd.read_csv(filepath, header=0, dtype=str)
-    #dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
-    #dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
+    dataframe = dataframe.drop_duplicates(['PART_ID'], keep='first')
+    dataframe = dataframe[dataframe['TYPE']=='CrossSellReference']
     g = graph_traversal
     for index, row in dataframe.iterrows():
-	    if g.V().has('objId',nan_to_string(row['PART_ID'])).toList() and \
-        g.V().has('objId',nan_to_string(row['REF_PART_ID'])).toList():
-		    g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
-            to(g.V().has('objId',nan_to_string(row['REF_PART_ID']))).\
-            property('app', 'Rec_Engine').iterate()
+        if not g.V().has('objId',nan_to_string(row['PART_ID'])).toList():       
+            g.addV('product').property('objId', nan_to_string(row['PART_ID'])).next()
+        if not g.V().has('objId',nan_to_string(row['REF_PART_ID'])).toList():
+            g.addV('product').property('objId', nan_to_string(row['REF_PART_ID'])).next()
+        g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
+        to(g.V().has('objId',nan_to_string(row['REF_PART_ID']))).property('app', 'Rec_Engine').iterate()
+
+def load_manual_prod_refer(filepath, graph_traversal):
+    dataframe = pd.read_excel(filepath, header=0, dtype=str)
+    g = graph_traversal
+    for index, row in dataframe.iterrows():
+        if not g.V().has('objId',nan_to_string(row['Customer Purchasing PN'])).toList():       
+            g.addV('product').property('objId', nan_to_string(row['Customer Purchasing PN'])).next()
+        if not g.V().has('objId',nan_to_string(row['Value'])).toList():
+            g.addV('product').property('objId', nan_to_string(row['Value'])).next()
+        g.addE('reference').from_(g.V().has('objId',nan_to_string(row['Customer Purchasing PN']))).\
+        to(g.V().has('objId',nan_to_string(row['Value']))).property('app', 'Rec_Engine').iterate()
 
 if __name__ == '__main__':
     main()

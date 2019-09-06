@@ -6,24 +6,24 @@ def main():
     with open('config/config.json', 'r', encoding='utf-8') as f:
         config = json.load(f)
 
-    logging.basicConfig(filename='log/load.log', level=logging.INFO, format=config['log_format'], datefmt=config['date_format'])
+    logging.basicConfig(filename=config['log_path'], level=logging.INFO, format=config['log_format'], datefmt=config['date_format'])
 
     remote_conn =  utils.graph_connect(config['host'])
-
+    
     g_traversal = utils.graph_traversal(remote_conn)
 
-    purchase_history_files = os.listdir(config['purchase_history_path'])
+    # purchase_history_files = os.listdir(config['purchase_history_path'])
 
-    if (purchase_history_files):
-        try:
-            for ph_file in purchase_history_files:
-                utils.load_purchase_history(config['purchase_history_path'] + '/' + ph_file, g_traversal)
-        except Exception as e:
-            logging.error(e)
-        else:
-            logging.info("load purchase_hisroty succefully!")
-    else:
-        logging.error("purchase_history file not exists!")
+    # if (purchase_history_files):
+    #     try:
+    #         for ph_file in purchase_history_files:
+    #             utils.load_purchase_history(config['purchase_history_path'] + '/' + ph_file, g_traversal)
+    #     except Exception as e:
+    #         logging.error(e)
+    #     else:
+    #         logging.info("load purchase_hisroty succefully!")
+    # else:
+    #     logging.error("purchase_history file not exists!")
 
     manual_reference_files = os.listdir(config['manual_reference_path'])
 
@@ -37,6 +37,12 @@ def main():
             logging.info("load manual_reference succefully!")
     else:
         logging.error("manual_reference file not exists!")
+
+    # g = g_traversal
+    # print(g.V().hasLabel('account').count().toList())
+    # print(g.V().hasLabel('product').count().toList())
+    # print(g.E().hasLabel('order').count().toList())
+    # print(g.E().hasLabel('reference').count().toList())
         
     remote_conn.close()
 
