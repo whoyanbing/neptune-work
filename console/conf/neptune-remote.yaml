@@ -1,0 +1,4 @@
+hosts: [recengineonpremdatasource.comltq8nzp9d.us-west-2.neptune.amazonaws.com]
+port: 8182
+connectionPool: { enableSsl: true, trustCertChainFile: "SFSRootCAG2.pem"}
+serializer: { className: org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV3d0, config: { serializeResultToString: true }}
