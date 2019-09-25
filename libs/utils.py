@@ -64,6 +64,21 @@ def load_manual_reference(filepath, graph_traversal):
             g.addE('reference').from_(g.V().has('objId',nan_to_string(row['PART_ID']))).\
             to(g.V().has('objId', nan_to_string(row['REF_PART_ID']).strip())).\
             property('app', 'Rec_Engine').iterate()
+
+def purchase_history_test(filepath, graph_traversal):
+    data_frame = pd.read_csv(filepath, sep='|', header=0, dtype=str)
+    g = graph_traversal
+    for index, row in data_frame.iterrows():
+        if not g.V().has('account', 'objId', nan_to_string(row['Account ID'])).out('order').has('product', 'objId', nan_to_string(row['Material Master Product ID'])).hasNext():
+            print(row['Account ID'])
+
+def manual_reference_test(filepath, graph_traversal):
+    dataframe = pd.read_csv(filepath, header=0, dtype=str)
+    dataframe = dataframe[dataframe['TYPE'].str.strip() == 'CrossSellReference']
+    g = graph_traversal
+    for index, row in dataframe.iterrows():
+        if not g.V().has('product', 'objId', nan_to_string(row['PART_ID'])).out('reference').has('product', 'objId', nan_to_string(row['REF_PART_ID']).strip()).hasNext():
+            print(row['PART_ID'])
             
 if __name__ == '__main__':
     main()
